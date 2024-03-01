@@ -1,1 +1,4 @@
 **/__pycache__/
+.pytest_cache
+**/__init__.py
+huey_consumer.py
