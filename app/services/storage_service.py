@@ -1,12 +1,17 @@
+import os
 import redis
-import psutil
 from rq import Queue
 import multiprocessing
 from app.models.key_value_model import KeyValueModel
 from app.common.constants.app_constants import AppConstants
 from app.common.exceptions.api_exception import ApiException
 
-redis_client = redis.StrictRedis(host="localhost", port=6379, decode_responses=True)
+redis_host = os.getenv("REDIS_HOST", "localhost")
+redis_port = os.getenv("REDIS_PORT", 6379)
+
+redis_client = redis.StrictRedis(
+    host=redis_host, port=redis_port, decode_responses=True
+)
 task_queue = Queue("task_queue", connection=redis_client)
 
 
@@ -25,7 +30,6 @@ class StorageService:
                 AppConstants.ResponseStatusEnum.Conflict,
             )
 
-        # Enqueue the task to set the value in the background
         task_queue.enqueue(self._set_value, key_str, data.value)
 
     def update_value(self, data: KeyValueModel):
@@ -36,7 +40,6 @@ class StorageService:
                 AppConstants.ResponseStatusEnum.NotFound,
             )
 
-        # Enqueue the task to set the value in the background
         task_queue.enqueue(self._set_value, key_str, data.value)
 
     def delete_value(self, key: int):
@@ -47,7 +50,6 @@ class StorageService:
                 AppConstants.ResponseStatusEnum.NotFound,
             )
 
-        # Enqueue the task to delete the value in the background
         task_queue.enqueue(self._delete_value, key_str)
 
     def get_value(self, key: int):
